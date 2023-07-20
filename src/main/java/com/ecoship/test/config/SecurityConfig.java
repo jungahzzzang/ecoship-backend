@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.ecoship.test.authentication.enums.Role;
 import com.ecoship.test.authentication.oauth2.OAuth2AuthenticationFailureHandler;
 import com.ecoship.test.authentication.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.ecoship.test.authentication.repository.CookieAuthorizationRequestRepository;
@@ -58,7 +59,9 @@ public class SecurityConfig {
 				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 			//요청에 대한 권한 설정
 	        http.authorizeRequests()
-	                .requestMatchers("/oauth2/**").permitAll()
+	        		.requestMatchers("/").permitAll()
+	        		.requestMatchers("/api/**").hasAnyRole(Role.ROLE_GUSET.name(), Role.ROLE_USER.name())
+	                .requestMatchers("/auth/**","/oauth2/**").permitAll()
 	                .anyRequest().authenticated();
 	        //oauth2 Login
 	        http.oauth2Login()

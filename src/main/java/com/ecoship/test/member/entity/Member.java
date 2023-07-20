@@ -1,6 +1,5 @@
 package com.ecoship.test.member.entity;
 
-import com.ecoship.test.authentication.domain.oauth.OAuthProvider;
 import com.ecoship.test.authentication.enums.AuthProvider;
 import com.ecoship.test.authentication.enums.Role;
 import com.ecoship.test.authentication.oauth2.OAuth2UserInfo;

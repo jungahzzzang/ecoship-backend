@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-public class JwtTokenProvider {
+public class JwtTokenProvider implements InitializingBean{
 	
 	private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String AUTHORITIES_KEY = "auth";
@@ -46,52 +46,37 @@ public class JwtTokenProvider {
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
-    private final Key key;
+    private Key key;
+    private final String secret;
+    private final long tokenValidityInMilliseconds;
 
-    public JwtTokenProvider(@Value("${jwt.secretKey}") String secretKey) {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        this.key = Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    //Authentication을 가지고 AccessToken, RefreshToken을 생성하는 메서드
-    public UserResponseDto.TokenInfo generateToken(Authentication authentication) {
-    	return generateToken(authentication.getName(), authentication.getAuthorities());
+    public JwtTokenProvider(@Value("${jwt.secretKey}") String secret, @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds) {
+        this.secret=secret;
+        this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
     }
     
-    //name, authorities 를 가지고 AccessToken, RefreshToken 을 생성하는 메서드
-    public UserResponseDto.TokenInfo generateToken(String name, Collection<? extends GrantedAuthority> inputAuthorities) {
-    	//권한 가져오기
-    	String authorities = inputAuthorities.stream()
+    @Override
+    public void afterPropertiesSet() throws Exception {
+    	byte[] keyBytes = Decoders.BASE64.decode(secret);
+    	this.key = Keys.hmacShaKeyFor(keyBytes);
+    	
+    }
+    
+    //Authentication 객체 권한 정보를 이용해서 토큰 생성
+    public String createToken(Authentication authentication) {
+    	String authorities = authentication.getAuthorities().stream()
     			.map(GrantedAuthority::getAuthority)
     			.collect(Collectors.joining(","));
     	
-    	Date now = new Date();
+    	long now = (new Date()).getTime();
+    	Date validity = new Date(now + this.tokenValidityInMilliseconds);
     	
-    	//Generate AccessToken
-        String accessToken = Jwts.builder()
-                .setSubject(name)
-                .claim(AUTHORITIES_KEY, authorities)
-                .claim("type", TYPE_ACCESS)
-                .setIssuedAt(now)   //토큰 발행 시간 정보
-                .setExpiration(new Date(now.getTime() + ExpireTime.ACCESS_TOKEN_EXPIRE_TIME))  //토큰 만료 시간 설정
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        //Generate RefreshToken
-        String refreshToken = Jwts.builder()
-                .claim("type", TYPE_REFRESH)
-                .setIssuedAt(now)   //토큰 발행 시간 정보
-                .setExpiration(new Date(now.getTime() + ExpireTime.REFRESH_TOKEN_EXPIRE_TIME)) //토큰 만료 시간 설정
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    	
-    	return UserResponseDto.TokenInfo.builder()
-    			.grantType(BEARER_TYPE)
-    			.accessToken(accessToken)
-    			.accessTokenExpirationTime(ExpireTime.ACCESS_TOKEN_EXPIRE_TIME)
-    			.refreshToken(refreshToken)
-    			.refreshTokenExpirationTime(ExpireTime.REFRESH_TOKEN_EXPIRE_TIME)
-    			.build();
+    	return Jwts.builder()
+    			.setSubject(authentication.getName())
+    			.claim(AUTHORITIES_KEY, authorities)
+    			.signWith(key, SignatureAlgorithm.HS512)
+    			.setExpiration(validity)
+    			.compact();
     }
     
     //JWT 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
 import jakarta.servlet.FilterChain;
@@ -20,6 +21,8 @@ public class JwtAuthenticationFilter extends GenericFilterBean{
 	
 	private final JwtTokenProvider jwtTokenProvider;
 	
+	public static final String AUTHORIZATION_HEADER = "Authorization";
+	
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 		
@@ -33,5 +36,14 @@ public class JwtAuthenticationFilter extends GenericFilterBean{
 		}
 		filterChain.doFilter(servletRequest, servletResponse);
 	}
+	
+	// Request Header에서 토큰 정보를 꺼내오기 위함
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
 
 }

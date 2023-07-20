@@ -60,10 +60,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 		String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
 		
 		//JWT 생성
-		UserResponseDto.TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
+		String token = jwtTokenProvider.createToken(authentication);
 		
 		return UriComponentsBuilder.fromUriString(targetUrl)
-				.queryParam("token", tokenInfo.getAccessToken())
+				.queryParam("token", token)
 				.build().toUriString();
 	}
 
