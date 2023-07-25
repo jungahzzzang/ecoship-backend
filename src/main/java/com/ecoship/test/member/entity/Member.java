@@ -1,48 +1,56 @@
 package com.ecoship.test.member.entity;
 
-import com.ecoship.test.authentication.enums.AuthProvider;
-import com.ecoship.test.authentication.enums.Role;
-import com.ecoship.test.authentication.oauth2.OAuth2UserInfo;
+import java.sql.Timestamp;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Table;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Getter
-@Entity
+@Entity 
+@Data
+@NoArgsConstructor
+@Table(name = "user_master")
 public class Member extends BaseDateEntity{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	@Column(name = "user_code")
+	private Long userCode;
 	
-	private String email;
+	@Column(name = "kakao_id")
+    private Long kakaoId;
+
+    @Column(name = "kakao_profile_img")
+    private String kakaoProfileImg;
+
+    @Column(name = "kakao_nickname")
+    private String kakaoNickname;
+
+    @Column(name = "kakao_email")
+    private String kakaoEmail;
+
+    @Column(name = "user_role")
+    private String userRole;
+
+    @Column(name = "create_time")
+    @CreationTimestamp
+    private Timestamp createTime;
 	
-	private String name;
-	
-	private String oauth2Id;
-	
-	@Enumerated(EnumType.STRING)
-	private AuthProvider authProvider;
-	
-	 @Enumerated(EnumType.STRING)
-	 private Role role;
-	
-	public Member update(OAuth2UserInfo oAuth2UserInfo) {
-		this.name = oAuth2UserInfo.getName();
-		this.oauth2Id = oAuth2UserInfo.getOAuth2Id();
-		
-		return this;
-	}
+	@Builder
+    public Member(Long kakaoId, String kakaoProfileImg, String kakaoNickname, String kakaoEmail, String userRole) {
+
+        this.kakaoId = kakaoId;
+        this.kakaoProfileImg = kakaoProfileImg;
+        this.kakaoNickname = kakaoNickname;
+        this.kakaoEmail = kakaoEmail;
+        this.userRole = userRole;
+    }
 }

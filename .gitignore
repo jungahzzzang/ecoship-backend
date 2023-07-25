@@ -39,3 +39,5 @@ out/
 ## yml
 application.yml
 application-oauth.yml
+
+/src/main/**/JwtProperties.java
