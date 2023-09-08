@@ -3,13 +3,13 @@ package com.ecoship.test.member.entity;
 import java.sql.Timestamp;
 
 import org.hibernate.annotations.CreationTimestamp;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @Entity 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "user_master")
 public class Member extends BaseDateEntity{
 
@@ -44,13 +46,9 @@ public class Member extends BaseDateEntity{
     @CreationTimestamp
     private Timestamp createTime;
 	
-	@Builder
-    public Member(Long kakaoId, String kakaoProfileImg, String kakaoNickname, String kakaoEmail, String userRole) {
+    public Member(String kakaoEmail, String kakaoNickname) {
 
-        this.kakaoId = kakaoId;
-        this.kakaoProfileImg = kakaoProfileImg;
         this.kakaoNickname = kakaoNickname;
         this.kakaoEmail = kakaoEmail;
-        this.userRole = userRole;
     }
 }

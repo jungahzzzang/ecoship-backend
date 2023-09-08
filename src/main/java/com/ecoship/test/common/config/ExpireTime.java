@@ -1,4 +1,4 @@
-package com.ecoship.test.config;
+package com.ecoship.test.common.config;
 
 public class ExpireTime {
 
