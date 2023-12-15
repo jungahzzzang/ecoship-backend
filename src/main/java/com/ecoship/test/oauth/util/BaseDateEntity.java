@@ -1,4 +1,4 @@
-package com.ecoship.test.member.entity;
+package com.ecoship.test.oauth.util;
 
 import java.time.LocalDateTime;
 

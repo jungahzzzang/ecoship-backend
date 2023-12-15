@@ -17,6 +17,7 @@ public class WebConfig implements WebMvcConfigurer{
 				.allowedOrigins("http://localhost:3000")
 				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")	//허용되는 Method
 				.allowedHeaders("*")	//허용되는 Header
+				.exposedHeaders("Authorization","Refresh-Token")
 				.allowCredentials(true)	//자격증명 허용
 				.maxAge(3600);			//허용 시간
 	}

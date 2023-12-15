@@ -4,19 +4,26 @@ import java.security.Key;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import com.ecoship.test.member.entity.Member;
+import com.ecoship.test.member.repository.RefreshTokenRepository;
+import com.ecoship.test.oauth.util.RefreshToken;
+
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -24,42 +31,47 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class JwtProvider {
 	
-	private final UserDetailsService userDetailsService;
-
-	@Value("${jwt.secretKey}")
-    private String JWT_SECRET;
+	private final RefreshTokenRepository refreshTokenRepository;
 	private Key key;
-	
-	private static final int ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30; // 30분
-	//private static final int ACCESS_TOKEN_EXPIRE_TIME = 1000 * 10 * 6 * 5; //5분
+	private static final String AUTHORITIES_KEY = "auth";
+    private static final String BEARER_PREFIX = "Bearer ";
+	//private static final int ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30; // 30분
+	private static final int ACCESS_TOKEN_EXPIRE_TIME = 1000 * 10 * 6 * 5; //5분
 	private static final int REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 14; // 2주일
 	
-	@PostConstruct
-	protected void keyInit() {
-		key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
+	long now = (new Date().getTime());
+	Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
+	Date refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
+	
+	public JwtProvider(@Value("${jwt.secretKey}") String secretKey, RefreshTokenRepository refreshTokenRepository) {
+		this.refreshTokenRepository = refreshTokenRepository;
+		byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+		this.key = Keys.hmacShaKeyFor(keyBytes);
 	}
 	
-	public TokenDto createTokenDto(Member member) {
-		long now = new Date().getTime();
+	public String createToken(String userId, String email) {
+		Claims claims = Jwts.claims().setSubject(userId);
+		claims.put("email", email);
 		
-		String accessToken = Jwts.builder()
-				.setSubject(member.getKakaoEmail())
-				.setIssuedAt(new Date())
-				.setExpiration(new Date(now + ACCESS_TOKEN_EXPIRE_TIME))
+		return Jwts.builder()
+				.setClaims(claims)			//정보 저장
+				.setIssuedAt(new Date())	//토큰 발행 시간 정보
+				.setExpiration(accessTokenExpiresIn)
 				.signWith(key, SignatureAlgorithm.HS256)
 				.compact();
+	}
+	
+	public String createRefreshToken(String userId) {
+		Claims claims = Jwts.claims().setSubject(userId);
 		
-		String refreshToken = Jwts.builder()
-				.setSubject(member.getKakaoEmail())
-				.setIssuedAt(new Date())
-				.setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+		return Jwts.builder()
+				.setClaims(claims)			//정보 저장
+				.setIssuedAt(new Date())	//토큰 발행 시간 정보
+				.setExpiration(refreshTokenExpiresIn)
 				.signWith(key, SignatureAlgorithm.HS256)
 				.compact();
-		
-		return new TokenDto(accessToken, refreshToken);
 	}
 	
 	public boolean validateToken(String token) throws ExpiredJwtException {
@@ -78,9 +90,11 @@ public class JwtProvider {
         return false;
     }
 	
-	public Authentication getAuthentication(String token) {
-        String email = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getSubject();
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-    }
+	public Member getMemberAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || AnonymousAuthenticationToken.class.isAssignableFrom(authentication.getClass())) {
+			return null;
+		}
+		return ((UserDetailsImpl) authentication.getPrincipal()).getMember();
+	}
 }

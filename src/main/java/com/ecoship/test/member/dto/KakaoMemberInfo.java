@@ -1,12 +1,13 @@
 package com.ecoship.test.member.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
+@Builder
 public class KakaoMemberInfo {
 
+	private Long kakaoId;
 	private String nickname;
 	private String email;
 }
