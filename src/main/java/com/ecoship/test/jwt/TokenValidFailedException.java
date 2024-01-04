@@ -1,4 +1,4 @@
-package com.ecoship.test.common.config.jwt;
+package com.ecoship.test.jwt;
 
 public class TokenValidFailedException extends RuntimeException{
 

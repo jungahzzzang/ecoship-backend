@@ -1,4 +1,4 @@
-package com.ecoship.test.common.config;
+package com.ecoship.test.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -6,7 +6,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import com.ecoship.test.common.config.jwt.JwtProperties;
+import com.ecoship.test.jwt.JwtProperties;
 
 @Configuration
 public class CorsConfig {

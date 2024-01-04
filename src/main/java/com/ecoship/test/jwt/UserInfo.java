@@ -1,19 +1,16 @@
-package com.ecoship.test.oauth.dto;
+package com.ecoship.test.jwt;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter @Setter
 @NoArgsConstructor
-@Builder
 @AllArgsConstructor
-public class LoginResponseDto {
+@Builder
+@Getter
+public class UserInfo {
 
 	private String username;
-    private String profileImage;
-
-    
+	private String nickname;
 }

@@ -1,4 +1,4 @@
-package com.ecoship.test.common.config;
+package com.ecoship.test.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

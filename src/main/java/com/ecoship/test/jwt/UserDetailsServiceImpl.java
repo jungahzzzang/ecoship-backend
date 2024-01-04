@@ -1,4 +1,4 @@
-package com.ecoship.test.common.config.jwt;
+package com.ecoship.test.jwt;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

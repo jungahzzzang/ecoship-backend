@@ -1,4 +1,4 @@
-package com.ecoship.test.common.config.jwt;
+package com.ecoship.test.jwt;
 
 import java.util.Collection;
 import java.util.Collections;

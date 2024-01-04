@@ -15,7 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.ecoship.test.common.config.jwt.JwtProperties;
+import com.ecoship.test.jwt.JwtProperties;
 import com.ecoship.test.member.entity.Member;
 import com.ecoship.test.member.entity.kakao.KakaoProfile;
 import com.ecoship.test.member.entity.kakao.OAuthToken;

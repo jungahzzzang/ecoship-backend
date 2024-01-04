@@ -1,4 +1,4 @@
-package com.ecoship.test.common.payload;
+package com.ecoship.test.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

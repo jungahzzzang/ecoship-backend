@@ -1,31 +1,24 @@
 package com.ecoship.test.oauth.service;
 
 import java.util.Random;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import com.ecoship.test.common.config.jwt.JwtProvider;
-import com.ecoship.test.common.config.jwt.TokenDto;
-import com.ecoship.test.common.config.jwt.UserDetailsImpl;
+import com.ecoship.test.jwt.JwtProperties;
+import com.ecoship.test.jwt.JwtTokenUtils;
+import com.ecoship.test.jwt.UserDetailsImpl;
 import com.ecoship.test.member.dto.KakaoMemberInfo;
 import com.ecoship.test.member.entity.Member;
 import com.ecoship.test.member.repository.MemberRepository;
-import com.ecoship.test.oauth.dto.LoginResponseDto;
-import com.ecoship.test.oauth.util.Validation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,21 +33,40 @@ import lombok.extern.slf4j.Slf4j;
 public class KakaoMemberService {
 	
 	private final MemberRepository memberRepository;
-	private final JwtProvider jwtProvider;
 	
 	@Value("${spring.security.oauth2.client.registration.kakao.client-id}")
-	private String clientId;
+	private String CLIENT_ID;
+	
+	@Value("${jwt.secretKey}")
+	private static String SECRET_KEY;
+	
+	@Value("${jwt.issuer}")
+	private String ISSUER;
+	
+	@Value("${jwt.userName}")
+	private String CLAIM_USER_NAME;
+	
+	@Value("${jwt.tokenExpiry}")
+	private String CLAIM_EXPIRED_DATE;
 	
 	@Transactional
-	public LoginResponseDto kakaoLogin(String code) throws JsonProcessingException {
+	public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
 		
 		// 1.인가코드로 액세스 토큰 요청
+		System.out.println("카카오 로그인 1번 접근");
 		String accessToken = getAccessToken(code);
+		
 		// 2.토큰으로 카카오 API 호출
+		System.out.println("카카오 로그인 2번 접근");
 		KakaoMemberInfo kakaoMemberInfo = getKakaoMemberInfo(accessToken);
 		
-		// 3. 필요 시 회원가입, JWT 토큰 발행
-		return registerKakaoMemberIfNeeded(kakaoMemberInfo);
+		// 3. 필요 시 회원가입
+		System.out.println("카카오 로그인 3번 접근");
+		Member member = registerKakaoMemberIfNeeded(kakaoMemberInfo);
+		
+		// 4. 강제 로그인 처리 & JWT 토큰 발행
+		System.out.println("카카오 로그인 4번 접근");
+		jwtTokenCreate(member, response);
 	}
 	
 	public String getAccessToken(String code) throws JsonProcessingException {
@@ -65,7 +77,7 @@ public class KakaoMemberService {
 		// HTTP Body 생성
 		MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
 		body.add("grant_type", "authorization_code");
-		body.add("client_id", clientId);
+		body.add("client_id", CLIENT_ID);
 		body.add("redirect_uri", "http://localhost:3000/user/kakao/callback");
         body.add("code", code);
         
@@ -136,10 +148,18 @@ public class KakaoMemberService {
 			memberRepository.save(kakaoMember);
 		}
 		
-		String accessToken = jwtProvider.createToken(Long.toString(kakaoMember.getId()), kakaoMember.getEmail());
-		String refreshToken = jwtProvider.createRefreshToken(Long.toString(kakaoMember.getId()));
+		//String accessToken = jwtProvider.createToken(Long.toString(kakaoMember.getId()), kakaoMember.getEmail());
+		//String refreshToken = jwtProvider.createRefreshToken(Long.toString(kakaoMember.getId()));
 		
 		return kakaoMember;
+	}
+	
+	public void jwtTokenCreate(Member member, HttpServletResponse response) {
+		
+		UserDetailsImpl userDetails = new UserDetailsImpl(member);
+
+        String token = JwtTokenUtils.createJwtToken(userDetails);
+        response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX+ token);
 	}
 
 }
